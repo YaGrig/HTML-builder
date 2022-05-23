@@ -9,9 +9,12 @@ fs.mkdir(path.join(__dirname, 'project-dist'), {recursive: true}, (err) => {
     if(err){
       console.log(err);
     }
-    console.log('Directory created successfully!');
   });
-
+  fs.mkdir(path.join(__dirname, 'project-dist/assets'), {recursive: true}, (err) => {
+    if(err){
+      console.log(err);
+    }
+  });
 fs.readFile(
     path.join(__dirname, 'template.html'),
     'utf-8',
@@ -21,7 +24,6 @@ fs.readFile(
         fs.readdir(path.join(__dirname, '/components'), 
   { withFileTypes: true },
   (err, files) => {
-    console.log('\nCurrent directory files:');
     if (err)
       console.log(err);
     else {
@@ -39,13 +41,11 @@ fs.readFile(
             if (err) throw err;
             textOfComponent = data;
             text = text.replace(component, textOfComponent);
-            console.log(text)
             fs.writeFile(
                 path.join(__dirname, '/project-dist/index.html'),
                 text,
                 (err) => {
                     if (err) throw err;
-                    console.log('Введите текст');
                 }
             );
         }
@@ -77,7 +77,6 @@ fs.writeFile(path.join(__dirname, 'project-dist/style.css'), '', (err) => {
                   if(err){
                     console.log(err);
                   }
-                  console.log('success coppy');
                 });
               }
             );
@@ -85,45 +84,95 @@ fs.writeFile(path.join(__dirname, 'project-dist/style.css'), '', (err) => {
         });
       }});
 
-fs.readdir(path.join(__dirname, '/assets'), 
+const createCopyFolder = (paths) => {
+fs.readdir(path.join(__dirname, paths), 
   (err, files) => {
     if (err)
       console.log(err);
     else {
       files.forEach(file => {
-        const fileName = path.join(__dirname, `/assets/${file}`);
-        fileNames.push(file);
-        filesDirectory.push(fileName);
+        let stats 
+        const fileName = path.join(__dirname, `${paths}/${file}`);
+        fs.stat(fileName, (err, stat) =>{
+            if(err) console.log(err);
+            else stats = stat;
+            if(stats.isDirectory()){
+                fs.readdir(fileName, (err, files) => {
+                    if (err) console.log(err);
+                    if(files.length === 0) 
+                    console.log(paths)
+                    fs.mkdir(path.join(__dirname, `project-dist/${paths}/${file}`), {recursive: true}, (err) => {
+                        if(err){
+                          console.log(err);
+                        }
+                      });
+                })
+                let newPath = `${paths}/${file}`
+                createCopyFolder(newPath);
+            } else {
+                fileNames.push({ paths: paths,
+                                 name: file});
+                filesDirectory.push(fileName);
+            }
+            fileNames.map(item => fs.mkdir(path.join(__dirname, `project-dist/${item.paths}`), {recursive: true}, (err) => {
+                if(err){
+                  console.log(err);
+                }
+              }));
+
+              for(let i = 0; i < filesDirectory.length; i++){
+                fs.copyFile(filesDirectory[i], path.join(__dirname, `/project-dist/${fileNames[i].paths}/${fileNames[i].name}`),fs.constants.COPYFILE_FICLONE, (err) => {
+                  if(err){
+                    console.log(err);
+                  } else {
+                  }
+                } );
+              }
+              removeExtra(paths);
+            });
       });
     }
-    fs.mkdir(path.join(__dirname, '/project-dist/assets/'), {recursive: true}, (err) => {
-      if(err){
-        console.log(err);
-      }
-      console.log('Directory created successfully!');
-    });
-    for(let i = 0; i < filesDirectory.length; i++){
-      fs.copyFile(filesDirectory[i], path.join(__dirname, `/project-dist/assets/${fileNames[i]}`),fs.constants.COPYFILE_FICLONE, (err) => {
-        if(err){
-          console.log(err);
-        } else {
-          console.log('success'); 
-        }
-      } );
+})
+const removeExtra = (paths) =>
+fs.readdir(path.join(__dirname, `project-dist/${paths}`), (err,files) => {
+    if (err){
+      console.log(err);
+    } else {
+        {     files.forEach(file => {
+              let stats 
+              const fileName = path.join(__dirname, `project-dist/${paths}/${file}`);
+              fs.stat(fileName, (err, stat) =>{
+                  if(err) console.log(err);
+                  else stats = stat;
+                  if(stats.isDirectory()){
+                      fs.readdir(fileName, (err, files) => {
+                          if (err) console.log(err);
+                          if(files.length === 0) {
+                        //   fs.mkdir(path.join(__dirname, `project-dist/${paths}/${file}`), {recursive: true}, (err) => {
+                        //       if(err){
+                        //         console.log(err);
+                        //       }
+                        //     });
+                      }
+                    })
+                      let newPath = `${paths}/${file}`
+                      removeExtra(newPath);
+                  } else {
+                      let array = [];
+                      fileNames.map(item => array.push(item.name))
+                      console.log(array)
+                     array.includes(file)? console.log('yes') : 
+                     fs.rm(path.join(__dirname, `project-dist/${paths}/${file}`), (err) =>{
+                        if(err){
+                          console.log(err);
+                        }
+                        console.log(`file ${file} deleted`);
+                      });
+                  }
+                  });
+            });
+          }
     }
   });
-fs.readdir(path.join(__dirname, '/project-dist/assets/'), (err,files) => {
-  if (err){
-    console.log(err);
-  } else {
-    files.forEach(item => fileNames.includes(item)? console.log(item) : fs.rm(path.join(__dirname, `/project-dist/assets/${item}`), (err) =>{
-      if(err){
-        console.log(err);
-      }
-      console.log(`file ${item} deleted`);
-    }));
-  }
-});
-
-
-
+}
+createCopyFolder('/assets')

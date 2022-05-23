@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
+
 fs.readdir(path.join(__dirname, '/secret-folder'), 
   { withFileTypes: true },
   (err, files) => {
@@ -10,19 +11,15 @@ fs.readdir(path.join(__dirname, '/secret-folder'),
     else {
       files.forEach(file => {
         const fileName = path.join(__dirname, `/secret-folder/${file.name}`);
-        const getSize = (fileName) => {
-          let size;
           fs.stat(fileName, (error, stats) => {
             if (error) {
               console.log(error);
             }
             else {
               size = stats.size;
+              console.log(file.name, path.parse(fileName).ext, size*0.001 + 'kb');
             }
           });
-          return size;
-        };
-        console.log(file.name, path.parse(fileName).ext, getSize(fileName));
       });
     }
   });
