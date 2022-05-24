@@ -4,6 +4,7 @@ let text = '';
 let components = [];
 let filesDirectory = [];
 let fileNames = [];
+let FolderNames = [];
 
 fs.mkdir(path.join(__dirname, 'project-dist'), {recursive: true}, (err) => {
     if(err){
@@ -28,7 +29,6 @@ fs.readFile(
       console.log(err);
     else {
       files.forEach(file => {
-        const filePath = path.join(__dirname, `/secret-folder/${file.name}`);
         components.push(path.parse(file.name).name);
       });
       components.map(item => {
@@ -97,6 +97,7 @@ fs.readdir(path.join(__dirname, paths),
             if(err) console.log(err);
             else stats = stat;
             if(stats.isDirectory()){
+                FolderNames.push(file)
                 fs.readdir(fileName, (err, files) => {
                     if (err) console.log(err);
                     if(files.length === 0) 
@@ -147,21 +148,20 @@ fs.readdir(path.join(__dirname, `project-dist/${paths}`), (err,files) => {
                   if(stats.isDirectory()){
                       fs.readdir(fileName, (err, files) => {
                           if (err) console.log(err);
-                          if(files.length === 0) {
-                        //   fs.mkdir(path.join(__dirname, `project-dist/${paths}/${file}`), {recursive: true}, (err) => {
-                        //       if(err){
-                        //         console.log(err);
-                        //       }
-                        //     });
-                      }
+                          if(!FolderNames.includes(file)){
+                              fs.rmdir(path.join(__dirname, `project-dist/${paths}/${file}`), {recursive: true, force: true}, (err) => {
+                                      if(err){
+                                        console.log(err);
+                                      }
+                                    });
+                                }
                     })
                       let newPath = `${paths}/${file}`
                       removeExtra(newPath);
                   } else {
                       let array = [];
                       fileNames.map(item => array.push(item.name))
-                      console.log(array)
-                     array.includes(file)? console.log('yes') : 
+                     array.includes(file)? null : 
                      fs.rm(path.join(__dirname, `project-dist/${paths}/${file}`), (err) =>{
                         if(err){
                           console.log(err);
