@@ -17,7 +17,11 @@ fs.readdir(path.join(__dirname, '/secret-folder'),
             }
             else {
               size = stats.size;
+              if(stats.isDirectory()){
+                console.log(file.name, 'is Directory, no ext', size*0.001 + 'kb');
+              } else {
               console.log(file.name, path.parse(fileName).ext, size*0.001 + 'kb');
+              }
             }
           });
       });
